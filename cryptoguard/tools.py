@@ -31,9 +31,14 @@ def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
     """
     if not tool_available("john"):
         return {"available": False, "note": "John the Ripper not installed in this environment."}
-    # Give John a guaranteed-writable HOME so it can create its pot file (the
-    # server process may not have HOME set under a Docker USER directive).
-    home = "/tmp"
+    # Core John stores results in <home>/.john/john.pot and resolves <home> from
+    # the password database (not always $HOME). Resolve it the same way, set HOME
+    # to match, and clear the pot so every demo run is a fresh crack.
+    try:
+        import pwd as _pwd
+        home = _pwd.getpwuid(os.getuid()).pw_dir
+    except Exception:
+        home = os.path.expanduser("~")
     env = {**os.environ, "HOME": home}
     pot = os.path.join(home, ".john", "john.pot")
     try:
@@ -48,20 +53,28 @@ def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
         cmd.append("--format=%s" % fmt)
         show.append("--format=%s" % fmt)
     try:
-        subprocess.run([*cmd, hashes_path], capture_output=True, text=True, timeout=60, env=env)
+        run = subprocess.run([*cmd, hashes_path], capture_output=True, text=True, timeout=60, env=env)
         shown = subprocess.run([*show, hashes_path], capture_output=True, text=True, timeout=30, env=env)
     except (subprocess.TimeoutExpired, OSError) as exc:
         return {"available": True, "error": str(exc)}
 
+    # Primary: parse `john --show` lines of the form "?:password".
     cracked: List[Dict] = []
     for line in shown.stdout.splitlines():
         line = line.strip()
-        if not line or "password hash" in line.lower():   # skip the summary line
+        if not line or "password hash" in line.lower():
             continue
         if ":" in line:
-            pwd = line.split(":", 1)[1]
-            if pwd:
-                cracked.append({"password": pwd})
+            pw = line.split(":", 1)[1]
+            if pw:
+                cracked.append({"password": pw})
+    # Backup: parse the live crack lines "password   (user)" from the run output.
+    if not cracked:
+        for line in (run.stdout + "\n" + run.stderr).splitlines():
+            m = re.match(r"^(.*\S)\s+\([^)]+\)\s*$", line)
+            if m and "0:00:" not in line and "g/s" not in line:
+                cracked.append({"password": m.group(1).strip()})
+
     m = re.search(r"(\d+)\s+password hashes?\s+cracked,\s*(\d+)\s+left", shown.stdout)
     total = (int(m.group(1)) + int(m.group(2))) if m else len(cracked)
     return {

@@ -84,8 +84,7 @@ def identify():
 def john():
     return jsonify(tools.run_john(
         os.path.join(DATA, "sample_hashes.txt"),
-        os.path.join(DATA, "wordlist.txt"),
-        fmt="raw-md5"))
+        os.path.join(DATA, "wordlist.txt")))   # auto-detect (md5crypt sample hashes)
 
 
 @app.route("/api/openssl")
