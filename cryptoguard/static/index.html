@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CryptoGuard</title>
+<style>
+  :root{
+    --bg:#071510; --bg2:#0a1d16; --panel:#0e241b; --panel2:#123025; --line:#1e4634;
+    --ink:#e7f6ee; --muted:#86b3a0; --em:#2fe08a; --em2:#19b56b; --gold:#ffd166;
+    --bad:#ff6b6b; --warn:#ffcf5c; --ok:#2fe08a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:radial-gradient(900px 500px at 85% -10%,rgba(47,224,138,.12),transparent 55%),var(--bg)}
+  .top{display:flex;align-items:center;gap:14px;padding:18px 24px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(47,224,138,.06),transparent);position:sticky;top:0;backdrop-filter:blur(8px);z-index:9}
+  .logo{width:44px;height:44px;filter:drop-shadow(0 4px 12px rgba(47,224,138,.4))}
+  .brand h1{margin:0;font-size:20px;letter-spacing:-.01em}
+  .brand p{margin:1px 0 0;color:var(--muted);font-size:12.5px}
+  .status{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .tool{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted)}
+  .tool.on{color:var(--em);border-color:rgba(47,224,138,.4)}
+  .wrap{max-width:1060px;margin:0 auto;padding:22px 16px 70px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel);border-radius:999px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px}
+  .tab.active{color:#06281b;background:linear-gradient(180deg,var(--em),var(--em2));border-color:transparent}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 14px 40px rgba(0,0,0,.3)}
+  .card h3{margin:0 0 4px;font-size:16px} .card .hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:12px 0 6px}
+  input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:11px 12px;font:inherit}
+  textarea{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  button{background:linear-gradient(180deg,var(--em),var(--em2));border:0;color:#06281b;border-radius:11px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer}
+  button.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-weight:500}
+  .section{display:none} .section.active{display:block}
+  .meter{height:12px;border-radius:999px;background:var(--panel2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
+  .meter span{display:block;height:100%;width:0;transition:width .4s,background .4s}
+  .scorelab{display:flex;justify-content:space-between;font-size:13px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  @media(max-width:620px){.tiles{grid-template-columns:1fr}}
+  .tile{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .tile .n{font-size:20px;font-weight:750} .tile .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px} th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)} th{color:var(--muted)}
+  .chip{display:inline-block;font-size:12px;border-radius:999px;padding:3px 10px;margin:3px 4px 0 0}
+  .c-bad{background:rgba(255,107,107,.14);color:var(--bad)} .c-ok{background:rgba(47,224,138,.14);color:var(--ok)}
+  .mono{font-family:ui-monospace,Menlo,monospace;word-break:break-all;font-size:12.5px}
+  .muted{color:var(--muted)} .drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
+  .drop.over{border-color:var(--em);color:var(--em)}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #06281b;border-top-color:transparent;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .pill{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:4px 11px;color:var(--muted)}
+  .john td{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="top">
+  <svg class="logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ef3b0"/><stop offset="1" stop-color="#19b56b"/></linearGradient></defs>
+    <path d="M24 3l16 6v10c0 10.5-6.8 17.6-16 21C14.8 36.6 8 29.5 8 19V9l16-6z" fill="url(#g)" opacity=".18" stroke="url(#g)" stroke-width="2"/>
+    <circle cx="24" cy="20" r="5" fill="url(#g)"/><rect x="21.6" y="22" width="4.8" height="10" rx="2" fill="url(#g)"/>
+    <circle cx="24" cy="20" r="2" fill="#06281b"/>
+  </svg>
+  <div class="brand"><h1>CryptoGuard</h1><p>Password &amp; file security toolkit</p></div>
+  <div class="status" id="tools"></div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-s="pw">Password strength</div>
+    <div class="tab" data-s="gen">Generator</div>
+    <div class="tab" data-s="enc">File encryption</div>
+    <div class="tab" data-s="hash">Integrity &amp; hash ID</div>
+  </div>
+
+  <!-- PASSWORD -->
+  <div class="section active" id="s-pw">
+    <div class="card">
+      <h3>Password strength analyzer</h3>
+      <p class="hint">Entropy, estimated crack time, and policy checks — computed locally, nothing is sent anywhere but this app.</p>
+      <div class="row"><input id="pw" type="text" placeholder="type a password to analyze" oninput="analyze()" autocomplete="off"></div>
+      <div class="meter"><span id="bar"></span></div>
+      <div class="scorelab"><b id="lab">—</b><span class="muted"><span id="score">0</span>/100</span></div>
+      <div class="tiles">
+        <div class="tile"><div class="n" id="ent">—</div><div class="l">Entropy (bits)</div></div>
+        <div class="tile"><div class="n" id="len">—</div><div class="l">Length</div></div>
+        <div class="tile"><div class="n" id="cs">—</div><div class="l">Charset</div></div>
+      </div>
+      <div id="chips" style="margin-top:14px"></div>
+      <table id="crack"><tr><th>attacker scenario</th><th>estimated time to crack</th></tr></table>
+    </div>
+    <div class="card">
+      <h3>“Prove it” — real cracking with John the Ripper</h3>
+      <p class="hint">Runs John against a bundled set of sample MD5 hashes to show how fast weak passwords fall (and that a strong one survives). Local, bundled data only.</p>
+      <button id="johnBtn" onclick="runJohn()">Run John the Ripper demo</button>
+      <div id="johnOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- GENERATOR -->
+  <div class="section" id="s-gen">
+    <div class="card">
+      <h3>Strong password &amp; passphrase generator</h3>
+      <p class="hint">Cryptographically-secure (Python <code>secrets</code>).</p>
+      <label>Length <span class="muted" id="lenv">18</span></label>
+      <input type="range" id="glen" min="8" max="48" value="18" oninput="lenv.textContent=this.value">
+      <div class="row" style="margin-top:14px">
+        <button onclick="gen('password')">Generate password</button>
+        <button class="ghost" onclick="gen('passphrase')">Generate passphrase</button>
+      </div>
+      <div class="card" style="margin-top:14px;background:var(--panel2)">
+        <div class="mono" id="genout" style="font-size:16px">—</div>
+        <button class="ghost" style="margin-top:10px" onclick="copyGen()">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENCRYPTION -->
+  <div class="section" id="s-enc">
+    <div class="card">
+      <h3>AES-256-GCM encryption</h3>
+      <p class="hint">Files/text encrypted in memory with a key derived from your passphrase (PBKDF2-HMAC-SHA256). Nothing is stored on the server.</p>
+      <div class="drop" id="drop">Drop a file here, or click to choose — or just type text below</div>
+      <input type="file" id="file" style="display:none">
+      <label>Text to encrypt (if no file)</label>
+      <textarea id="plain" placeholder="secret message..."></textarea>
+      <label>Passphrase</label>
+      <input id="encpw" type="password" placeholder="encryption passphrase">
+      <div class="row" style="margin-top:12px">
+        <button onclick="doEncrypt()">Encrypt</button>
+        <button class="ghost" onclick="doDecrypt()">Decrypt the box below</button>
+      </div>
+      <div id="encout" style="margin-top:14px"></div>
+      <label>Ciphertext (paste here to decrypt)</label>
+      <textarea id="cipher" class="mono" placeholder="base64 ciphertext..."></textarea>
+    </div>
+  </div>
+
+  <!-- INTEGRITY / HASH ID -->
+  <div class="section" id="s-hash">
+    <div class="card">
+      <h3>File integrity (hashes)</h3>
+      <p class="hint">Compute SHA-256 / SHA-1 / MD5 to verify a file hasn't changed.</p>
+      <div class="drop" id="drop2">Drop a file here or click to choose</div>
+      <input type="file" id="file2" style="display:none">
+      <div id="intout" style="margin-top:14px"></div>
+    </div>
+    <div class="card">
+      <h3>Hash identifier</h3>
+      <p class="hint">Identify a hash type (built-in rules, plus the <code>hashid</code> tool when available).</p>
+      <input id="hashin" placeholder="paste a hash, e.g. 5f4dcc3b5aa765d61d8327deb882cf99" oninput="idHash()">
+      <div id="idout" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const api=(u,o)=>fetch(u,o).then(r=>r.json());
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); $('s-'+t.dataset.s).classList.add('active');
+});
+// tool status
+api('/api/tools').then(t=>{$('tools').innerHTML=Object.entries(t).map(([k,v])=>`<span class="tool ${v?'on':''}">${k} ${v?'●':'○'}</span>`).join('');});
+
+const COL=['#ff6b6b','#ff9f45','#ffd166','#8ad66b','#2fe08a'];
+async function analyze(){
+  const pw=$('pw').value;
+  if(!pw){$('bar').style.width='0';$('lab').textContent='—';$('score').textContent='0';$('ent').textContent='—';$('len').textContent='—';$('cs').textContent='—';$('chips').innerHTML='';$('crack').innerHTML='<tr><th>attacker scenario</th><th>estimated time to crack</th></tr>';return;}
+  const r=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+  $('bar').style.width=r.score+'%'; $('bar').style.background=COL[Math.min(4,Math.floor(r.score/20))];
+  $('lab').textContent=r.label; $('score').textContent=r.score;
+  $('ent').textContent=r.entropy_bits; $('len').textContent=r.length; $('cs').textContent=r.charset_size;
+  $('chips').innerHTML=r.issues.map(i=>`<span class="chip c-bad">✗ ${i}</span>`).join('')+r.passed.map(p=>`<span class="chip c-ok">✓ ${p}</span>`).join('');
+  $('crack').innerHTML='<tr><th>attacker scenario</th><th>estimated time to crack</th></tr>'+Object.entries(r.crack_times).map(([k,v])=>`<tr><td>${k}</td><td><b>${v}</b></td></tr>`).join('');
+}
+async function runJohn(){
+  const b=$('johnBtn'); b.innerHTML='<span class="spin"></span> Cracking…'; b.disabled=true;
+  const r=await api('/api/john'); b.innerHTML='Run John the Ripper demo'; b.disabled=false;
+  if(!r.available){$('johnOut').innerHTML=`<span class="muted">${r.note||'tool unavailable'} (available in the Docker build).</span>`;return;}
+  $('johnOut').innerHTML=`<div class="pill">cracked ${r.cracked_count} / ${r.total} sample hashes</div>
+    <table class="john" style="margin-top:10px"><tr><th>MD5 hash</th><th>cracked password</th></tr>`+
+    r.cracked.map(c=>`<tr><td>${c.hash}</td><td style="color:var(--bad)"><b>${c.password}</b></td></tr>`).join('')+
+    `</table><p class="muted" style="margin-top:8px">The strong sample hash is not in the wordlist — it stays uncracked, exactly as a strong password should.</p>`;
+}
+async function gen(t){const r=await api('/api/generate?type='+t+'&length='+$('glen').value);$('genout').textContent=r.value;}
+function copyGen(){navigator.clipboard.writeText($('genout').textContent);}
+// file helpers
+function readB64(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result.split(',')[1]);fr.readAsDataURL(file);});}
+function wireDrop(dropId,fileId,cb){const d=$(dropId),f=$(fileId);d.onclick=()=>f.click();
+  d.ondragover=e=>{e.preventDefault();d.classList.add('over');};d.ondragleave=()=>d.classList.remove('over');
+  d.ondrop=e=>{e.preventDefault();d.classList.remove('over');if(e.dataTransfer.files[0])cb(e.dataTransfer.files[0]);};
+  f.onchange=()=>{if(f.files[0])cb(f.files[0]);};}
+let encFile=null;
+wireDrop('drop','file',f=>{encFile=f;$('drop').textContent='📄 '+f.name+' ('+f.size+' bytes)';});
+async function doEncrypt(){
+  const pw=$('encpw').value; if(!pw){alert('passphrase required');return;}
+  let body={password:pw};
+  if(encFile){body.data_b64=await readB64(encFile);} else {body.text=$('plain').value;}
+  const r=await api('/api/encrypt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.error){$('encout').innerHTML=`<span style="color:var(--bad)">${r.error}</span>`;return;}
+  $('cipher').value=r.ciphertext_b64;
+  $('encout').innerHTML=`<div class="tiles"><div class="tile"><div class="n">${r.algorithm}</div><div class="l">cipher</div></div>
+    <div class="tile"><div class="n" style="font-size:12px">${r.kdf}</div><div class="l">key derivation</div></div>
+    <div class="tile"><div class="n">${r.size} B</div><div class="l">plaintext size</div></div></div>
+    <p class="muted mono" style="margin-top:10px">salt ${r.salt_hex} · nonce ${r.nonce_hex}<br>sha256(plaintext) ${r.sha256}</p>`;
+}
+async function doDecrypt(){
+  const r=await api('/api/decrypt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ciphertext_b64:$('cipher').value,password:$('encpw').value})});
+  if(r.error){$('encout').innerHTML=`<span style="color:var(--bad)">✗ ${r.error}</span>`;return;}
+  $('encout').innerHTML=`<div class="pill c-ok" style="background:rgba(47,224,138,.14);color:var(--ok)">✓ decrypted &amp; authenticated (GCM tag valid)</div>
+    <div class="card" style="margin-top:10px;background:var(--panel2)"><div class="mono">${(r.text||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))||'(binary)'}</div></div>`;
+}
+let intFile=null;
+wireDrop('drop2','file2',async f=>{$('drop2').textContent='📄 '+f.name;const b=await readB64(f);
+  const r=await api('/api/integrity',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data_b64:b})});
+  $('intout').innerHTML=`<table><tr><th>algorithm</th><th>digest</th></tr>
+    <tr><td>SHA-256</td><td class="mono">${r.sha256}</td></tr>
+    <tr><td>SHA-1</td><td class="mono">${r.sha1}</td></tr>
+    <tr><td>MD5</td><td class="mono">${r.md5}</td></tr></table>`;});
+async function idHash(){const v=$('hashin').value.trim();if(!v){$('idout').innerHTML='';return;}
+  const r=await api('/api/identify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:v})});
+  let h=r.builtin_guesses.map(g=>`<span class="chip c-ok">${g}</span>`).join('')||'<span class="muted">no built-in match</span>';
+  if(r.hashid)h+='<div class="muted" style="margin-top:8px">hashid: '+r.hashid.join(', ')+'</div>';
+  $('idout').innerHTML=h;}
+</script>
+</body>
+</html>

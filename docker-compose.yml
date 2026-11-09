@@ -1,0 +1,10 @@
+services:
+  cryptoguard:
+    build: .
+    image: cryptoguard:local
+    container_name: cryptoguard
+    ports: ["127.0.0.1:8101:8000"]
+    tmpfs: ["/tmp:size=16m"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    restart: unless-stopped
