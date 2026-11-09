@@ -23,38 +23,50 @@ def tool_available(name: str) -> bool:
 # John the Ripper — crack bundled sample hashes to show real crack behaviour
 # --------------------------------------------------------------------------
 
-def run_john(hashes_path: str, wordlist_path: str, fmt: str = "raw-md5") -> Dict:
+def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
+    """Crack bundled md5crypt sample hashes with John (format auto-detected).
+
+    Core John stores results in the default pot (~/.john/john.pot); we clear it
+    first so the demo always shows a fresh crack.
+    """
     if not tool_available("john"):
         return {"available": False, "note": "John the Ripper not installed in this environment."}
-    pot = os.path.join(tempfile.gettempdir(), "cg_john.pot")
+    # Give John a guaranteed-writable HOME so it can create its pot file (the
+    # server process may not have HOME set under a Docker USER directive).
+    home = "/tmp"
+    env = {**os.environ, "HOME": home}
+    pot = os.path.join(home, ".john", "john.pot")
     try:
+        os.makedirs(os.path.dirname(pot), exist_ok=True)
         if os.path.exists(pot):
             os.remove(pot)
     except OSError:
         pass
-    common = ["--format=%s" % fmt, "--pot=%s" % pot]
+    cmd = ["john", "--wordlist=%s" % wordlist_path]
+    show = ["john", "--show"]
+    if fmt:
+        cmd.append("--format=%s" % fmt)
+        show.append("--format=%s" % fmt)
     try:
-        subprocess.run(["john", "--wordlist=%s" % wordlist_path, *common, hashes_path],
-                       capture_output=True, text=True, timeout=60)
-        shown = subprocess.run(["john", "--show", *common, hashes_path],
-                               capture_output=True, text=True, timeout=30)
+        subprocess.run([*cmd, hashes_path], capture_output=True, text=True, timeout=60, env=env)
+        shown = subprocess.run([*show, hashes_path], capture_output=True, text=True, timeout=30, env=env)
     except (subprocess.TimeoutExpired, OSError) as exc:
         return {"available": True, "error": str(exc)}
 
     cracked: List[Dict] = []
     for line in shown.stdout.splitlines():
-        if ":" in line and not line.lower().startswith(("0 password", "1 password")):
-            parts = line.split(":")
-            if len(parts) >= 2 and parts[1]:
-                cracked.append({"hash": parts[0], "password": parts[1]})
-    total = 0
-    m = re.search(r"(\d+)\s+password hash", shown.stdout)
-    if m:
-        total = int(m.group(1))
+        line = line.strip()
+        if not line or "password hash" in line.lower():   # skip the summary line
+            continue
+        if ":" in line:
+            pwd = line.split(":", 1)[1]
+            if pwd:
+                cracked.append({"password": pwd})
+    m = re.search(r"(\d+)\s+password hashes?\s+cracked,\s*(\d+)\s+left", shown.stdout)
+    total = (int(m.group(1)) + int(m.group(2))) if m else len(cracked)
     return {
-        "available": True, "format": fmt,
-        "cracked": cracked, "cracked_count": len(cracked),
-        "total": total or len(cracked),
+        "available": True,
+        "cracked": cracked, "cracked_count": len(cracked), "total": total,
     }
 
 

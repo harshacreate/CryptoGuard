@@ -180,10 +180,10 @@ async function runJohn(){
   const b=$('johnBtn'); b.innerHTML='<span class="spin"></span> Cracking…'; b.disabled=true;
   const r=await api('/api/john'); b.innerHTML='Run John the Ripper demo'; b.disabled=false;
   if(!r.available){$('johnOut').innerHTML=`<span class="muted">${r.note||'tool unavailable'} (available in the Docker build).</span>`;return;}
-  $('johnOut').innerHTML=`<div class="pill">cracked ${r.cracked_count} / ${r.total} sample hashes</div>
-    <table class="john" style="margin-top:10px"><tr><th>MD5 hash</th><th>cracked password</th></tr>`+
-    r.cracked.map(c=>`<tr><td>${c.hash}</td><td style="color:var(--bad)"><b>${c.password}</b></td></tr>`).join('')+
-    `</table><p class="muted" style="margin-top:8px">The strong sample hash is not in the wordlist — it stays uncracked, exactly as a strong password should.</p>`;
+  $('johnOut').innerHTML=`<div class="pill">cracked <b style="color:var(--bad)">${r.cracked_count}</b> / ${r.total} sample md5crypt hashes</div>
+    <table class="john" style="margin-top:10px"><tr><th>#</th><th>cracked password</th></tr>`+
+    r.cracked.map((c,i)=>`<tr><td class="muted">${i+1}</td><td style="color:var(--bad)"><b>${(c.password||'').replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]))}</b></td></tr>`).join('')+
+    `</table><p class="muted" style="margin-top:8px">${r.total-r.cracked_count} hash stayed uncracked — the strong sample isn't in the wordlist, exactly as a strong password should behave.</p>`;
 }
 async function gen(t){const r=await api('/api/generate?type='+t+'&length='+$('glen').value);$('genout').textContent=r.value;}
 function copyGen(){navigator.clipboard.writeText($('genout').textContent);}
