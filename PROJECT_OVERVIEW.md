@@ -1,27 +1,28 @@
-# CryptoGuard — Project Overview
+# CryptoGuard — project overview
 
-**Sector:** Applied cryptography / credential security · **Year 1 project**
+**Portfolio stage:** Year 1 · **Focus:** applied cryptography and credential security
 
-## Summary
-A password-and-file security toolkit that makes cryptography tangible: it scores
-password strength and *demonstrates* real cracking with John the Ripper, generates
-secure secrets, and performs authenticated AES-256-GCM encryption with PBKDF2 key
-derivation — presented through a polished, interactive web UI.
+## Goal
 
-## Real tools
-- **John the Ripper** — cracks bundled sample MD5 hashes to show crack times.
-- **OpenSSL** — crypto toolkit information and primitives.
-- **hashid** — hash-type identification (with a built-in rule fallback).
+Make password estimates, encryption, and integrity checks explainable in one small local web app. The interface emphasizes the threat-model assumptions behind each result.
 
-## How it works
-- `cryptoguard/crypto_core.py` — entropy/crack-time model, AES-GCM, hashing, generators.
-- `cryptoguard/tools.py` — subprocess wrappers for John/hashid/OpenSSL (graceful fallback).
-- `cryptoguard/app.py` — Flask API; `static/index.html` — the UI.
+## Components
 
-## Run
+- `cryptoguard/crypto_core.py` — password checks, rough guess-rate estimates, secure random generators, AES-GCM, and digests.
+- `cryptoguard/tools.py` — bounded subprocess wrappers for John the Ripper, `hashid`, and OpenSSL.
+- `cryptoguard/app.py` — Flask JSON API with input validation and an 8 MB decoded file limit.
+- `cryptoguard/static/index.html` — responsive interactive browser UI.
+- `cryptoguard/data/` — synthetic sample hashes and a short local wordlist.
+
+## Data and scope
+
+All password hashes and wordlist entries are bundled demonstrations, not live account data. No external service is contacted. User files are handled in memory by the local app; the project does not persist them.
+
+## Run and verify
+
 ```bash
-docker compose up --build -d   # http://localhost:8101
+docker compose up --build -d
+make test
 ```
 
-## Scope
-Own input / bundled data only. Files processed in memory, never stored.
+Open `http://localhost:8101`. See the main README for limitations and design notes.

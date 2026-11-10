@@ -16,7 +16,14 @@ STATIC = os.path.join(HERE, "static")
 DATA = os.path.join(HERE, "data")
 
 app = Flask(__name__, static_folder=STATIC, static_url_path="/static")
-app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024   # 8 MB upload cap
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 8 MB file + base64 / JSON overhead
+
+
+def _body():
+    value = request.get_json(silent=True)
+    if not isinstance(value, dict):
+        return None
+    return value
 
 
 @app.route("/")
@@ -31,33 +38,59 @@ def health():
 
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
-    pw = (request.get_json(force=True, silent=True) or {}).get("password", "")
+    data = _body()
+    if data is None:
+        return jsonify({"error": "expected a JSON object"}), 400
+    pw = data.get("password", "")
+    if not isinstance(pw, str) or len(pw) > 256:
+        return jsonify({"error": "password must be text of at most 256 characters"}), 400
     return jsonify(asdict(cc.analyze_password(pw)))
 
 
 @app.route("/api/generate")
 def generate():
     kind = request.args.get("type", "password")
-    if kind == "passphrase":
-        return jsonify({"value": cc.generate_passphrase(int(request.args.get("words", 5)))})
-    return jsonify({"value": cc.generate_password(
-        int(request.args.get("length", 18)),
-        request.args.get("symbols", "1") != "0")})
+    try:
+        if kind == "passphrase":
+            words = int(request.args.get("words", 5))
+            if not 4 <= words <= 8:
+                raise ValueError
+            return jsonify({"value": cc.generate_passphrase(words)})
+        if kind != "password":
+            return jsonify({"error": "type must be password or passphrase"}), 400
+        length = int(request.args.get("length", 18))
+        if not 12 <= length <= 64:
+            raise ValueError
+        return jsonify({"value": cc.generate_password(
+            length, request.args.get("symbols", "1") != "0")})
+    except ValueError:
+        return jsonify({"error": "password length must be 12–64; passphrases use 4–8 words"}), 400
 
 
 @app.route("/api/encrypt", methods=["POST"])
 def encrypt():
-    d = request.get_json(force=True, silent=True) or {}
+    d = _body()
+    if d is None:
+        return jsonify({"error": "expected a JSON object"}), 400
     pw = d.get("password", "")
-    if not pw:
+    if not isinstance(pw, str) or not pw:
         return jsonify({"error": "password required"}), 400
-    raw = base64.b64decode(d["data_b64"]) if d.get("data_b64") else d.get("text", "").encode()
-    return jsonify(cc.encrypt_bytes(raw, pw))
+    try:
+        raw = base64.b64decode(d["data_b64"], validate=True) if d.get("data_b64") else str(d.get("text", "")).encode()
+    except (ValueError, TypeError):
+        return jsonify({"error": "file data must be valid base64"}), 400
+    if len(raw) > 8 * 1024 * 1024:
+        return jsonify({"error": "file must be no larger than 8 MB"}), 413
+    result = cc.encrypt_bytes(raw, pw)
+    result["filename"] = str(d.get("filename", "text.txt"))[:120]
+    return jsonify(result)
 
 
 @app.route("/api/decrypt", methods=["POST"])
 def decrypt():
-    d = request.get_json(force=True, silent=True) or {}
+    d = _body()
+    if d is None:
+        return jsonify({"error": "expected a JSON object"}), 400
     try:
         plain = cc.decrypt_bytes(d.get("ciphertext_b64", ""), d.get("password", ""))
     except Exception:
@@ -69,14 +102,26 @@ def decrypt():
 
 @app.route("/api/integrity", methods=["POST"])
 def integrity():
-    d = request.get_json(force=True, silent=True) or {}
-    raw = base64.b64decode(d["data_b64"]) if d.get("data_b64") else d.get("text", "").encode()
+    d = _body()
+    if d is None:
+        return jsonify({"error": "expected a JSON object"}), 400
+    try:
+        raw = base64.b64decode(d["data_b64"], validate=True) if d.get("data_b64") else str(d.get("text", "")).encode()
+    except (ValueError, TypeError):
+        return jsonify({"error": "file data must be valid base64"}), 400
+    if len(raw) > 8 * 1024 * 1024:
+        return jsonify({"error": "file must be no larger than 8 MB"}), 413
     return jsonify(cc.file_integrity(raw))
 
 
 @app.route("/api/identify", methods=["POST"])
 def identify():
-    h = (request.get_json(force=True, silent=True) or {}).get("hash", "")
+    data = _body()
+    if data is None:
+        return jsonify({"error": "expected a JSON object"}), 400
+    h = data.get("hash", "")
+    if not isinstance(h, str) or len(h) > 512:
+        return jsonify({"error": "hash must be text of at most 512 characters"}), 400
     return jsonify(tools.identify_hash(h))
 
 
@@ -98,7 +143,7 @@ def tool_status():
 
 
 def main():
-    app.run(host=os.getenv("HOST", "0.0.0.0"), port=int(os.getenv("PORT", "8000")))
+    app.run(host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "8000")))
 
 
 if __name__ == "__main__":

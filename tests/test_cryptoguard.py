@@ -36,3 +36,26 @@ def test_api_endpoints():
     e = c.post("/api/encrypt", json={"text": "hi", "password": "k"}).get_json()
     d = c.post("/api/decrypt", json={"ciphertext_b64": e["ciphertext_b64"], "password": "k"}).get_json()
     assert d["text"] == "hi"
+
+
+def test_api_rejects_bad_input_and_bounds_generator():
+    c = app.test_client()
+    assert c.post("/api/analyze", json={"password": "x" * 257}).status_code == 400
+    assert c.get("/api/generate?length=3").status_code == 400
+    assert c.get("/api/generate?type=passphrase&words=99").status_code == 400
+    assert c.post("/api/integrity", json={"data_b64": "%%%"}).status_code == 400
+    assert c.post("/api/encrypt", json={"password": "x", "data_b64": "%%%"}).status_code == 400
+
+
+def test_cguard_envelope_includes_filename_and_decrypts():
+    c = app.test_client()
+    encoded = base64.b64encode(b"sample document").decode()
+    encrypted = c.post("/api/encrypt", json={
+        "password": "correct horse", "data_b64": encoded, "filename": "notes.txt"
+    }).get_json()
+    assert encrypted["algorithm"] == "AES-256-GCM"
+    assert encrypted["filename"] == "notes.txt"
+    decrypted = c.post("/api/decrypt", json={
+        "password": "correct horse", "ciphertext_b64": encrypted["ciphertext_b64"]
+    }).get_json()
+    assert base64.b64decode(decrypted["data_b64"]) == b"sample document"
