@@ -2,7 +2,6 @@
 
 **A password and file-security workbench that turns crypto choices into things you can inspect.**
 
-![CryptoGuard workbench](docs/cryptoguard-preview.png)
 
 CryptoGuard brings password checks, local secret generation, authenticated file encryption, file hashes, and one bounded password-cracking demonstration into a single interactive app. It is the first project in a year-by-year security portfolio: focused on applied cryptography and careful handling of user input.
 
