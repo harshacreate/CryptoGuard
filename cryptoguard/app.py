@@ -83,9 +83,15 @@ def encrypt():
         return jsonify({"error": "file data must be valid base64"}), 400
     if len(raw) > 8 * 1024 * 1024:
         return jsonify({"error": "file must be no larger than 8 MB"}), 413
-    result = cc.encrypt_bytes(raw, pw)
-    result["filename"] = str(d.get("filename", "text.txt"))[:120]
-    return jsonify(result)
+    filename = str(d.get("filename", "text.txt"))[:120]
+    try:
+        envelope = cc.encrypt_envelope(raw, pw, filename)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"algorithm": envelope["algorithm"],
+                    "kdf": f"{envelope['kdf']['name']} ({envelope['kdf']['iterations']:,} iterations)",
+                    "filename": envelope["filename"], "size": envelope["size"],
+                    "sha256": envelope["sha256"], "envelope": envelope})
 
 
 @app.route("/api/decrypt", methods=["POST"])
@@ -94,7 +100,11 @@ def decrypt():
     if d is None:
         return jsonify({"error": "expected a JSON object"}), 400
     try:
-        plain = cc.decrypt_bytes(d.get("ciphertext_b64", ""), d.get("password", ""))
+        if "envelope" in d:
+            plain = cc.decrypt_envelope(d["envelope"], d.get("password", ""))
+        else:
+            # Legacy v1.0.0 files stored salt || nonce || ciphertext as base64.
+            plain = cc.decrypt_bytes(d.get("ciphertext_b64", ""), d.get("password", ""))
     except Exception:
         return jsonify({"error": "decryption failed — wrong password or corrupted/tampered data"}), 400
     return jsonify({"text": plain.decode("utf-8", "replace"),
@@ -154,7 +164,17 @@ def kdf_benchmark():
         charset, length = s.charset_size, s.length
     else:
         charset, length = 95, 10
-    return jsonify(kdf_bench.benchmark(charset_size=charset, length=length))
+    include_argon2 = data.get("include_argon2", False)
+    if not isinstance(include_argon2, bool):
+        return jsonify({"error": "include_argon2 must be a boolean"}), 400
+    try:
+        return jsonify(kdf_bench.benchmark(
+            charset_size=charset, length=length, include_argon2=include_argon2,
+            argon2_memory_kib=data.get("argon2_memory_kib", 65_536),
+            argon2_time_cost=data.get("argon2_time_cost", 3),
+            argon2_parallelism=data.get("argon2_parallelism", 1)))
+    except (TypeError, ValueError, RuntimeError) as exc:
+        return jsonify({"error": str(exc)}), 400
 
 
 @app.route("/api/openssl")

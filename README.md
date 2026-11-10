@@ -4,7 +4,7 @@
 
 Design Project I · Semester III (2024–25) · B.Tech, specialisation in Cyber Security, DISC, Hindustan Institute of Technology and Science, Chennai · by **Malepati Sree Harsha**
 
-![tests](https://img.shields.io/badge/tests-14%20passing-2ea44f) ![python](https://img.shields.io/badge/python-3.12-3776AB) ![docker](https://img.shields.io/badge/docker-compose-2496ED) ![license](https://img.shields.io/badge/license-MIT-blue) ![focus](https://img.shields.io/badge/focus-applied%20cryptography-6250d6)
+![tests](https://img.shields.io/badge/tests-19%20passing-2ea44f) ![python](https://img.shields.io/badge/python-3.12-3776AB) ![docker](https://img.shields.io/badge/docker-compose-2496ED) ![license](https://img.shields.io/badge/license-MIT-blue) ![focus](https://img.shields.io/badge/focus-applied%20cryptography-6250d6)
 
 ![CryptoGuard workbench](docs/screenshots/01-hero.png)
 
@@ -36,14 +36,20 @@ Ratios are the robust result; absolute speeds depend on hardware, and GPUs are f
 
 ![KDF benchmark](docs/diagrams/chart-kdf-benchmark.png)
 
+An opt-in Argon2id sample was measured on macOS arm64 at 8 MiB, one pass and
+one lane: **379.7 hashes/s** over a 0.1501 s run, with 44,318,720 bytes process
+peak RSS. This is a small reproducible benchmark setting, not a recommended
+file-encryption profile; full platform details and the exact command are in
+[the Argon2id measurement note](docs/ARGON2ID_BENCHMARK.md).
+
 ## Features
 
-- **Explainable strength analysis:** entropy, policy checks, common-password and pattern detection, and crack-time scenarios with each guess rate stated.
+- **Explainable strength analysis:** entropy, policy checks, common-password detection, repeated / keyboard / sequential patterns, simple dictionary chunks and common l33t substitutions, with crack-time scenarios and stated guess rates.
 - **Secure generation:** passwords (12–64 chars) and passphrases (4–8 words) from the OS CSPRNG (`secrets`).
-- **AES-256-GCM encryption:** PBKDF2-HMAC-SHA256 key derivation (200k iterations), random salt and nonce, downloadable `.cguard` envelope; tampering and wrong passphrases are rejected.
+- **AES-256-GCM encryption:** PBKDF2-HMAC-SHA256 (200k iterations), random salt and nonce, a versioned authenticated `.cguard` JSON envelope, and compatibility for legacy v1.0.0 files.
 - **Integrity and hash ID:** SHA-256 / SHA-1 / MD5 digests; format identification with `hashid` and built-in rules.
 - **John the Ripper demo:** bounded to the bundled sample hashes and word list; accepts no input.
-- **Measured KDF benchmark (novel):** times MD5, SHA-1, SHA-256, PBKDF2 (200k, 600k) and scrypt on the host; slowdown *k* → log(k)/log(c) characters.
+- **Measured KDF benchmark:** times MD5, SHA-1, SHA-256, PBKDF2 (200k, 600k) and scrypt; Argon2id is an explicit opt-in and reports its configured memory, iterations, parallelism, runtime, and host platform.
 
 ## Architecture
 
@@ -68,6 +74,7 @@ cp .env.example .env              # optional
 make test                         # 14 tests
 make run                          # http://127.0.0.1:8000
 python -m cryptoguard.kdf_bench   # benchmark from the CLI
+python -m cryptoguard.kdf_bench --argon2  # opt-in Argon2id (default 64 MiB, 3 passes, 1 lane)
 python scripts/loadtest.py        # load test a running instance
 ```
 
@@ -90,13 +97,15 @@ Strict same-origin Content-Security-Policy and OWASP headers, request IDs, acces
 | [Viva questions](report/Viva_Questions.md) | Likely examiner / interviewer questions with answers |
 | [Portfolio copy](report/Portfolio_Copy.md) | GitHub description, LinkedIn and resume text |
 | [Showcase page](docs/index.html) | Landing page for GitHub Pages (Settings → Pages → `main` / `docs`) |
+| [`.cguard` v1 format](docs/CGUARD_FORMAT.md) | Authenticated field definitions, legacy migration behavior, and fixed test vector |
+| [Argon2id measurement](docs/ARGON2ID_BENCHMARK.md) | Recorded parameters, runtime, platform, memory and exact command |
 | [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) | Threat model, disclosure process, workflow, history |
 
 ## Limitations and roadmap
 
-- The strength score is a heuristic. It over-rates dictionary words with l33t substitutions (e.g. `Tr0ub4dor&3-Horse!` scores 100). Next: zxcvbn-style pattern matching.
-- The benchmark is single-core CPU only. Next: bcrypt and Argon2id, and a Hashcat GPU measurement.
-- A versioned, documented envelope format with interoperability tests.
+- The strength score is a heuristic with a small local pattern list, not a trained password estimator or a crack-time guarantee. It can miss language-specific words and combinations.
+- KDF timings are single-process measurements on the current host, not attacker-wide cracking rates. Argon2id memory reports configured working memory; process RSS also includes runtime and library overhead.
+- The versioned `.cguard` format is documented in [`docs/CGUARD_FORMAT.md`](docs/CGUARD_FORMAT.md); version 1 currently uses PBKDF2-HMAC-SHA256 for file encryption. Argon2id is benchmark-only.
 - Educational, loopback-only tool; not independently audited.
 
 ## Repository layout

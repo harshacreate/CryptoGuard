@@ -24,6 +24,7 @@ import json
 import math
 import os
 import platform
+import argparse
 import time
 from typing import Callable, Dict, List, Tuple
 
@@ -64,8 +65,18 @@ SCHEMES: List[Tuple[str, Callable[[bytes], bytes], str]] = [
 ]
 
 
-def _rate(fn: Callable[[bytes], bytes], budget_s: float) -> Tuple[float, int]:
-    """Return (hashes per second, samples) by timing fn for about budget_s."""
+def _argon2id(memory_kib: int, time_cost: int, parallelism: int) -> Callable[[bytes], bytes]:
+    try:
+        from argon2.low_level import Type, hash_secret_raw
+    except ImportError as exc:
+        raise RuntimeError("install argon2-cffi to benchmark Argon2id") from exc
+    return lambda pw: hash_secret_raw(pw, SALT, time_cost=time_cost,
+                                      memory_cost=memory_kib, parallelism=parallelism,
+                                      hash_len=32, type=Type.ID)
+
+
+def _rate(fn: Callable[[bytes], bytes], budget_s: float) -> Tuple[float, int, float]:
+    """Return (hashes per second, samples, elapsed seconds)."""
     count = 0
     start = time.perf_counter()
     elapsed = 0.0
@@ -73,7 +84,7 @@ def _rate(fn: Callable[[bytes], bytes], budget_s: float) -> Tuple[float, int]:
         fn(b"candidate-%d" % count)
         count += 1
         elapsed = time.perf_counter() - start
-    return count / elapsed, count
+    return count / elapsed, count, elapsed
 
 
 def _human(seconds: float) -> str:
@@ -87,15 +98,48 @@ def _human(seconds: float) -> str:
     return "under a second"
 
 
-def benchmark(charset_size: int = 95, length: int = 10, budget_s: float = 0.15) -> Dict:
+def _process_peak_rss_bytes():
+    """Return process high-water RSS in bytes where resource is available."""
+    try:
+        import resource
+        value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return int(value if platform.system() == "Darwin" else value * 1024)
+    except (ImportError, OSError, ValueError):
+        return None
+
+
+def benchmark(charset_size: int = 95, length: int = 10, budget_s: float = 0.15,
+              include_argon2: bool = False, argon2_memory_kib: int = 65_536,
+              argon2_time_cost: int = 3, argon2_parallelism: int = 1) -> Dict:
     if not 1 <= charset_size <= 256 or not 1 <= length <= 128:
         raise ValueError("charset_size must be 1-256 and length 1-128")
+    if budget_s <= 0 or budget_s > 10:
+        raise ValueError("budget_s must be greater than 0 and at most 10")
+    if not 8_192 <= argon2_memory_kib <= 262_144:
+        raise ValueError("argon2_memory_kib must be 8192-262144")
+    if not 1 <= argon2_time_cost <= 10 or not 1 <= argon2_parallelism <= 8:
+        raise ValueError("Argon2id time_cost must be 1-10 and parallelism 1-8")
+    if argon2_memory_kib < 8 * argon2_parallelism:
+        raise ValueError("Argon2id memory must be at least 8 KiB per parallel lane")
     keyspace_log10 = length * math.log10(charset_size)
     rows = []
-    for name, fn, note in SCHEMES:
-        rate, samples = _rate(fn, budget_s)
+    schemes = [(name, fn, note, {}) for name, fn, note in SCHEMES]
+    if include_argon2:
+        params = {"memory_kib": argon2_memory_kib, "time_cost": argon2_time_cost,
+                  "parallelism": argon2_parallelism, "type": "Argon2id"}
+        schemes.append((f"Argon2id m={argon2_memory_kib}KiB t={argon2_time_cost} p={argon2_parallelism}",
+                        _argon2id(argon2_memory_kib, argon2_time_cost, argon2_parallelism),
+                        "memory-hard password KDF; configured memory is per guess", params))
+    for name, fn, note, params in schemes:
+        rss_before = _process_peak_rss_bytes()
+        rate, samples, elapsed = _rate(fn, budget_s)
+        rss_after = _process_peak_rss_bytes()
         rows.append({"scheme": name, "note": note,
-                     "hashes_per_second": round(rate, 1), "samples": samples})
+                     "hashes_per_second": round(rate, 1), "samples": samples,
+                     "runtime_seconds": round(elapsed, 4), "parameters": params,
+                     "process_peak_rss_bytes": rss_after,
+                     "process_peak_rss_delta_bytes": (max(0, rss_after - rss_before)
+                                                       if rss_after is not None and rss_before is not None else None)})
     base = rows[0]["hashes_per_second"]
     for row in rows:
         slowdown = base / row["hashes_per_second"]
@@ -105,15 +149,25 @@ def benchmark(charset_size: int = 95, length: int = 10, budget_s: float = 0.15) 
         row["exhaust_keyspace"] = _human(10 ** seconds_log10) if seconds_log10 < 300 else f"10^{seconds_log10:.0f} seconds"
     return {
         "machine": f"{platform.system()} {platform.machine()}, Python {platform.python_version()}, one core",
+        "platform": platform.platform(),
         "password_model": {"charset_size": charset_size, "length": length,
                            "keyspace": f"{charset_size}^{length} ≈ 10^{keyspace_log10:.1f}"},
         "results": rows,
-        "caveat": "Measured on this machine with hashlib; GPU/ASIC attackers are much faster on fast hashes. Compare ratios, not absolute times.",
+        "caveat": "Measured on this machine with hashlib and argon2-cffi when enabled. GPU/ASIC attackers are much faster on fast hashes. Compare ratios, not absolute times. Argon2id memory_kib is configured working memory per guess; observed process memory also includes interpreter and library overhead.",
     }
 
 
 def main():
-    print(json.dumps(benchmark(), indent=2))
+    parser = argparse.ArgumentParser(description="Measure password KDF cost on this machine")
+    parser.add_argument("--argon2", action="store_true", help="opt in to the Argon2id measurement")
+    parser.add_argument("--argon2-memory-kib", type=int, default=65_536)
+    parser.add_argument("--argon2-time-cost", type=int, default=3)
+    parser.add_argument("--argon2-parallelism", type=int, default=1)
+    args = parser.parse_args()
+    print(json.dumps(benchmark(include_argon2=args.argon2,
+                               argon2_memory_kib=args.argon2_memory_kib,
+                               argon2_time_cost=args.argon2_time_cost,
+                               argon2_parallelism=args.argon2_parallelism), indent=2))
 
 
 if __name__ == "__main__":
