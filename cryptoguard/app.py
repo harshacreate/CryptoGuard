@@ -9,7 +9,8 @@ from dataclasses import asdict
 from flask import Flask, jsonify, request, send_from_directory
 
 from cryptoguard import crypto_core as cc
-from cryptoguard import tools
+from cryptoguard import kdf_bench, tools
+from cryptoguard.web_security import install, rate_limited
 
 HERE = os.path.dirname(__file__)
 STATIC = os.path.join(HERE, "static")
@@ -17,6 +18,7 @@ DATA = os.path.join(HERE, "data")
 
 app = Flask(__name__, static_folder=STATIC, static_url_path="/static")
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 8 MB file + base64 / JSON overhead
+log = install(app, "cryptoguard")
 
 
 def _body():
@@ -126,10 +128,33 @@ def identify():
 
 
 @app.route("/api/john")
+@rate_limited(6)
 def john():
     return jsonify(tools.run_john(
         os.path.join(DATA, "sample_hashes.txt"),
         os.path.join(DATA, "wordlist.txt")))   # auto-detect (md5crypt sample hashes)
+
+
+@app.route("/api/kdf-bench", methods=["POST"])
+@rate_limited(6)
+def kdf_benchmark():
+    """Time each password-storage scheme here, sized to the given password.
+
+    The password only sets the keyspace (charset size and length); it is not
+    hashed, stored or logged.
+    """
+    data = _body()
+    if data is None:
+        return jsonify({"error": "expected a JSON object"}), 400
+    pw = data.get("password", "")
+    if not isinstance(pw, str) or len(pw) > 256:
+        return jsonify({"error": "password must be text of at most 256 characters"}), 400
+    if pw:
+        s = cc.analyze_password(pw)
+        charset, length = s.charset_size, s.length
+    else:
+        charset, length = 95, 10
+    return jsonify(kdf_bench.benchmark(charset_size=charset, length=length))
 
 
 @app.route("/api/openssl")

@@ -59,3 +59,21 @@ def test_cguard_envelope_includes_filename_and_decrypts():
         "password": "correct horse", "ciphertext_b64": encrypted["ciphertext_b64"]
     }).get_json()
     assert base64.b64decode(decrypted["data_b64"]) == b"sample document"
+
+
+def test_kdf_benchmark_orders_schemes_by_cost():
+    from cryptoguard import kdf_bench
+    report = kdf_bench.benchmark(charset_size=62, length=8, budget_s=0.02)
+    rates = {r["scheme"]: r["hashes_per_second"] for r in report["results"]}
+    assert rates["MD5 (unsalted)"] > 1000 * rates["PBKDF2-SHA256 200k"]
+    assert rates["PBKDF2-SHA256 200k"] > rates["PBKDF2-SHA256 600k"]
+    pbkdf2 = next(r for r in report["results"] if r["scheme"] == "PBKDF2-SHA256 600k")
+    assert pbkdf2["extra_chars_equivalent"] > 2
+
+
+def test_kdf_endpoint_validates_input():
+    from cryptoguard.web_security import reset_rate_limits
+    reset_rate_limits()
+    c = app.test_client()
+    assert c.post("/api/kdf-bench", json={"password": "x" * 300}).status_code == 400
+    assert c.post("/api/kdf-bench", data="nope").status_code == 400

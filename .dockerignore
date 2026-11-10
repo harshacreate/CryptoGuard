@@ -5,3 +5,7 @@ venv
 __pycache__
 *.py[cod]
 .DS_Store
+report/
+docs/
+scripts/
+.env
