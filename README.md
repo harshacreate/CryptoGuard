@@ -1,94 +1,148 @@
 # CryptoGuard
 
-**A password and file-security workbench that turns crypto choices into things you can inspect.**
+**A measured password and file-security workbench.**
 
+Design Project I · Semester III (2024–25) · B.Tech, specialisation in Cyber Security, DISC, Hindustan Institute of Technology and Science, Chennai · by **Malepati Sree Harsha**
 
-CryptoGuard brings password checks, local secret generation, authenticated file encryption, file hashes, and one bounded password-cracking demonstration into a single interactive app. It is the first project in a year-by-year security portfolio: focused on applied cryptography and careful handling of user input.
+![tests](https://img.shields.io/badge/tests-14%20passing-2ea44f) ![python](https://img.shields.io/badge/python-3.12-3776AB) ![docker](https://img.shields.io/badge/docker-compose-2496ED) ![license](https://img.shields.io/badge/license-MIT-blue) ![focus](https://img.shields.io/badge/focus-applied%20cryptography-6250d6)
 
-## Problem / why it matters
+![CryptoGuard workbench](docs/screenshots/01-hero.png)
 
-People often see “strong password” meters without understanding their assumptions, or use checksums as if they protected confidentiality. The workbench explains the difference, shows the estimate model, and lets a user compare encryption and integrity operations on a file they choose.
+Password meters print “centuries” without saying how fast the attacker is assumed to guess. That speed depends far more on how the **server stores** the password than on one extra character. CryptoGuard is a local, private workbench for password analysis, secure generation, authenticated file encryption and a real John the Ripper demonstration. It also **measures** each password-storage scheme on your machine and expresses the cost in password characters.
 
-## What I built
+## Key results (measured)
 
-- Password strength score, entropy estimate, policy checks, predictable-pattern checks, and rough guess-rate scenarios.
-- Strong password and passphrase generators backed by Python's `secrets` module.
-- AES-256-GCM file/text encryption with PBKDF2-HMAC-SHA256; an authenticated `.cguard` envelope can be downloaded and decrypted later.
-- SHA-256, SHA-1, and MD5 fingerprints, plus format hints using `hashid` when available.
-- A John the Ripper demo limited to the bundled sample hashes and wordlist.
-- A responsive workbench with visible progress, tool status, download/print report controls, and independent sections for each task.
-
-### Architecture
-
-```mermaid
-flowchart LR
-  UI[HTML / CSS / JavaScript] -->|local JSON request| Flask[Flask API]
-  Flask --> Core[Python crypto and estimate logic]
-  Flask --> John[John the Ripper on bundled hashes]
-  Flask --> HashID[hashid on pasted hash format]
-  Flask --> SSL[OpenSSL toolkit info]
-  Browser[Selected file in browser memory] -->|base64 over loopback| Flask
-  Flask -->|ciphertext / digest only| Browser
-```
-
-## Tools used
-
-| Tool | Purpose |
+| Result | Value |
 |---|---|
-| Python `cryptography` | AES-256-GCM and PBKDF2-HMAC-SHA256 |
-| John the Ripper | Crack only the bundled sample hashes with the bundled wordlist |
-| `hashid` | Optional hash-format identification; a small heuristic is the local fallback |
-| OpenSSL | Report installed toolkit version and available cipher names |
-| Flask | Local API for the interactive workbench |
+| Guessing slowdown, PBKDF2-SHA256 600k vs MD5 (one core, Docker image) | **231,328×** |
+| Equivalent extra random characters (95-symbol alphabet) | **+2.71** |
+| Weak sample hashes cracked by John the Ripper (16-word list) | **8 / 9** |
+| Automated tests | **14 / 14 passing** (unit, integration, security) |
+| Password-analysis latency under load | p50 4.8 ms · p95 7.8 ms · 1,535 req/s |
 
-## Run it
+<details><summary>Full benchmark table (Linux aarch64, Python 3.12.16, one core)</summary>
 
-### Docker (recommended)
+| Scheme | Guesses / s | Slowdown vs MD5 | Worth (chars) |
+|---|---|---|---|
+| MD5 (unsalted) | 3,516,181.8 | ≈ 1× | — |
+| SHA-1 (unsalted) | 4,160,726.7 | ≈ 1× | — |
+| SHA-256 + salt | 3,834,115.7 | ≈ 1× | — |
+| PBKDF2-SHA256 200k | 45.7 | 76,940× | +2.47 |
+| PBKDF2-SHA256 600k | 15.2 | 231,328× | +2.71 |
+| scrypt N=2^14 r=8 | 51.7 | 68,011× | +2.44 |
 
-Requires Docker Desktop with Compose.
+Ratios are the robust result; absolute speeds depend on hardware, and GPUs are far faster on fast hashes. A single-core benchmark does not show scrypt's memory-hardness advantage.
+</details>
+
+![KDF benchmark](docs/diagrams/chart-kdf-benchmark.png)
+
+## Features
+
+- **Explainable strength analysis:** entropy, policy checks, common-password and pattern detection, and crack-time scenarios with each guess rate stated.
+- **Secure generation:** passwords (12–64 chars) and passphrases (4–8 words) from the OS CSPRNG (`secrets`).
+- **AES-256-GCM encryption:** PBKDF2-HMAC-SHA256 key derivation (200k iterations), random salt and nonce, downloadable `.cguard` envelope; tampering and wrong passphrases are rejected.
+- **Integrity and hash ID:** SHA-256 / SHA-1 / MD5 digests; format identification with `hashid` and built-in rules.
+- **John the Ripper demo:** bounded to the bundled sample hashes and word list; accepts no input.
+- **Measured KDF benchmark (novel):** times MD5, SHA-1, SHA-256, PBKDF2 (200k, 600k) and scrypt on the host; slowdown *k* → log(k)/log(c) characters.
+
+## Architecture
+
+![Architecture](docs/diagrams/architecture.png)
+
+UML, DFD and deployment diagrams are in [`docs/diagrams/`](docs/diagrams/) and explained in the [project report](report/CryptoGuard_Project_Report.pdf).
+
+## Quick start
 
 ```bash
-docker compose up --build -d
-open http://localhost:8101
+docker compose up --build -d      # John the Ripper, hashid and OpenSSL included
+open http://localhost:8101        # bound to 127.0.0.1 only
 docker compose down
 ```
 
-Double-click `Start.command` on macOS to start Docker if needed, wait for the health endpoint, and open the dashboard. The app port is bound to `127.0.0.1`.
-
-### Local Python
+On macOS you can double-click `Start.command`. Local development without Docker:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -r requirements.txt
-make test
-make run
+cp .env.example .env              # optional
+make test                         # 14 tests
+make run                          # http://127.0.0.1:8000
+python -m cryptoguard.kdf_bench   # benchmark from the CLI
+python scripts/loadtest.py        # load test a running instance
 ```
 
-Open `http://127.0.0.1:8000`.
+## Security
 
-## Results / evaluation
+Strict same-origin Content-Security-Policy and OWASP headers, request IDs, access logs that never include request bodies, JSON errors without stack traces, per-client rate limits on John and the benchmark, subprocesses without a shell, and a non-root container. See [SECURITY.md](SECURITY.md) for the threat model and how to report a vulnerability.
 
-`make test` checks weak-versus-longer-password behavior, AES-GCM round trips and tamper rejection, hash helpers, API validation, and generator bounds. The John panel reports the live result from the installed tool against the checked-in sample set. Its count is a demonstration result, not a password-strength benchmark.
+## Testing
 
-Password crack-time bars are **estimates** based on simplified guess rates and a theoretical keyspace. They do not account for a real person's password habits, leaked credentials, attacker hardware, or every password-hashing scheme. Always use unique credentials and MFA.
+`make test` runs unit tests (strength model, AES-GCM round trip and tamper rejection, generators, hash ID, KDF ordering), integration tests through Flask's test client, and security tests (headers, no-store, request-ID log-injection guard, JSON 404, HTTP 429). CI runs them on every push. Browser checks and screenshots were captured from the Docker build.
 
-## What I learned / design decisions
+## Documentation
 
-- A message authentication tag matters: GCM rejects a modified ciphertext or wrong key instead of returning unauthenticated bytes.
-- Salt and nonce are safe to store beside ciphertext; the passphrase is not included in the envelope.
-- A password score can mislead if its attacker model is hidden, so the UI shows the guess-rate assumptions and calls the time a rough estimate.
-- The cracking demo is intentionally scoped to repository fixtures. It does not accept an arbitrary hash file or remote target.
-- Selected files travel from the browser to the local Flask process for a single request; the app does not write them to disk or retain them.
+| Document | |
+|---|---|
+| [Project report (PDF)](report/CryptoGuard_Project_Report.pdf) · [Word](report/CryptoGuard_Project_Report.docx) | IEEE-style report: literature survey, SRS, UML/DFD, implementation, testing, results, references |
+| [Presentation (PowerPoint)](report/CryptoGuard_Presentation.pptx) · [PDF](report/CryptoGuard_Presentation.pdf) | Review / viva slides with speaker notes |
+| [Synopsis](report/CryptoGuard_Synopsis.pdf) | Two-page project synopsis |
+| [Demo script](report/Demo_Script.md) | Timed live-demonstration walkthrough |
+| [Viva questions](report/Viva_Questions.md) | Likely examiner / interviewer questions with answers |
+| [Portfolio copy](report/Portfolio_Copy.md) | GitHub description, LinkedIn and resume text |
+| [Showcase page](docs/index.html) | Landing page for GitHub Pages (Settings → Pages → `main` / `docs`) |
+| [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) | Threat model, disclosure process, workflow, history |
 
-## Limitations & next steps
+## Limitations and roadmap
 
-The password estimate is a teaching heuristic rather than a formal estimator such as zxcvbn. The passphrase list is intentionally small. The app is a local educational prototype and has not undergone a security audit; do not use it as a remote file-encryption service. A useful next step is a separately reviewed, versioned envelope format with stronger input-size controls and independent interoperability tests.
+- The strength score is a heuristic. It over-rates dictionary words with l33t substitutions (e.g. `Tr0ub4dor&3-Horse!` scores 100). Next: zxcvbn-style pattern matching.
+- The benchmark is single-core CPU only. Next: bcrypt and Argon2id, and a Hashcat GPU measurement.
+- A versioned, documented envelope format with interoperability tests.
+- Educational, loopback-only tool; not independently audited.
 
-## Scope and safety
+## Repository layout
 
-All operations use user-provided input or bundled sample data. John only reads `cryptoguard/data/sample_hashes.txt` and `cryptoguard/data/wordlist.txt`. The UI never opens a URL or contacts a third-party service. The project is an educational security tool, not a production password manager.
+```
+├── .dockerignore
+├── .env.example
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── .gitignore
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── Dockerfile
+├── LICENSE
+├── Makefile
+├── PROJECT_OVERVIEW.md
+├── README.md
+├── SECURITY.md
+├── Start.command
+├── cryptoguard/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── crypto_core.py
+│   ├── data/
+│   │   ├── sample_hashes.txt
+│   │   └── wordlist.txt
+│   ├── kdf_bench.py
+│   ├── static/
+│   │   └── index.html
+│   ├── tools.py
+│   └── web_security.py
+├── docker-compose.yml
+├── docs/
+│   ├── README.md
+│   ├── diagrams/  (10 images)
+│   ├── index.html
+│   └── screenshots/  (6 images)
+├── requirements.txt
+├── scripts/
+│   └── loadtest.py
+└── tests/
+    ├── test_cryptoguard.py
+    └── test_security.py
+```
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+MIT, see [LICENSE](LICENSE). Bundled hashes and word list are synthetic teaching data.

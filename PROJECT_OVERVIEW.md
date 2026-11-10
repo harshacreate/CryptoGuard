@@ -1,6 +1,6 @@
 # CryptoGuard — project overview
 
-**Portfolio stage:** Year 1 · **Focus:** applied cryptography and credential security
+**Course:** Design Project I · Semester III · 2024–25 · **Author:** Malepati Sree Harsha · **Focus:** applied cryptography and credential security
 
 ## Goal
 
