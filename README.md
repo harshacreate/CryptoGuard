@@ -1,10 +1,14 @@
 # CryptoGuard
 
+![CryptoGuard demo](demo/cryptoguard-demo.gif)
+
+The walkthrough uses disposable demo-only strings; never enter a password you use on another service.
+
 **A measured password and file-security workbench.**
 
 Design Project I · Semester III (2024–25) · B.Tech, specialisation in Cyber Security, DISC, Hindustan Institute of Technology and Science, Chennai · by **Malepati Sree Harsha**
 
-![tests](https://img.shields.io/badge/tests-19%20passing-2ea44f) ![python](https://img.shields.io/badge/python-3.12-3776AB) ![docker](https://img.shields.io/badge/docker-compose-2496ED) ![license](https://img.shields.io/badge/license-MIT-blue) ![focus](https://img.shields.io/badge/focus-applied%20cryptography-6250d6)
+![tests](https://img.shields.io/badge/tests-19%20passing-2ea44f) [![coverage](https://codecov.io/gh/harshacreate/CryptoGuard/branch/main/graph/badge.svg)](https://codecov.io/gh/harshacreate/CryptoGuard) ![python](https://img.shields.io/badge/python-3.12-3776AB) ![docker](https://img.shields.io/badge/docker-compose-2496ED) ![license](https://img.shields.io/badge/license-MIT-blue) ![focus](https://img.shields.io/badge/focus-applied%20cryptography-6250d6)
 
 ![CryptoGuard workbench](docs/screenshots/01-hero.png)
 
@@ -58,6 +62,12 @@ file-encryption profile; full platform details and the exact command are in
 UML, DFD and deployment diagrams are in [`docs/diagrams/`](docs/diagrams/) and explained in the [project report](report/CryptoGuard_Project_Report.pdf).
 
 ## Quick start
+
+Run the published image:
+
+```bash
+docker run --rm -p 127.0.0.1:8101:8000 ghcr.io/harshacreate/cryptoguard:latest
+```
 
 ```bash
 docker compose up --build -d      # John the Ripper, hashid and OpenSSL included
