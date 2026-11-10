@@ -1,5 +1,9 @@
 # CryptoGuard
 
+![CryptoGuard demo](demo/cryptoguard-demo.gif)
+
+The walkthrough uses disposable demo-only strings. Never enter a password you use on another service.
+
 CryptoGuard is a local app for checking passwords, making passwords and passphrases, encrypting files, and comparing password storage methods. It also has a small John the Ripper demo that uses sample data.
 
 Design Project I, Semester III (2024–25), B.Tech Cyber Security, Hindustan Institute of Technology and Science. Project by Malepati Sree Harsha.
@@ -32,6 +36,14 @@ The sample hashes are for learning. They are not real account passwords.
 ## Run it
 
 With Docker:
+
+After a version tag is published, you can also run the GHCR image:
+
+```bash
+docker run --rm -p 127.0.0.1:8101:8000 ghcr.io/harshacreate/cryptoguard:latest
+```
+
+Or build locally with Compose:
 
 ```bash
 docker compose up --build -d
