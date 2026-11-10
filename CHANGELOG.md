@@ -2,7 +2,7 @@
 
 This page lists the main CryptoGuard changes. It uses the [Keep a Changelog format](https://keepachangelog.com/en/1.1.0/). Version numbers use [SemVer](https://semver.org/).
 
-## [1.1.0] - 2026-11-10
+## [1.1.0] - Unreleased (prepared; tag after review and merge)
 
 ### Added and changed
 
@@ -12,8 +12,13 @@ This page lists the main CryptoGuard changes. It uses the [Keep a Changelog form
 - Fixed tool status words and made small-screen tap areas 44 pixels tall.
 - Added the report, slides, short report, diagrams, demo script and interview notes under report/. Added the project page under docs/.
 
+- Opt-in Argon2id KDF benchmark with explicit parameters and per-run timing metadata; file-encryption KDF remains unchanged.
+- Pattern-aware password findings for repeated strings, keyboard / alphabetic / numeric runs and common l33t substitutions.
+- Versioned `.cguard` v1 JSON envelope with authenticated metadata, a deterministic test vector, strict validation, and legacy v1.0.0 decryption support.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added
 
 - First full release. It has a Flask API, a working dashboard, links to outside tools, a Docker image and Compose file, unit tests and GitHub Actions checks.
+
