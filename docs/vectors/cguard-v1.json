@@ -1,0 +1,15 @@
+{
+  "format": "cguard",
+  "version": 1,
+  "algorithm": "AES-256-GCM",
+  "kdf": {
+    "name": "PBKDF2-HMAC-SHA256",
+    "iterations": 200000,
+    "salt_hex": "000102030405060708090a0b0c0d0e0f"
+  },
+  "nonce_hex": "000102030405060708090a0b",
+  "filename": "vector.txt",
+  "size": 27,
+  "sha256": "ed4c73d24e97849617cc667e23e96cd7660d2a9aa087d1e9204295a951e294ba",
+  "ciphertext_b64": "NyIwZBzD6AtWNd1HoRCaaKZVETxgQECB5A+7sHKWgonVlia+t7PpoeGFMw=="
+}
