@@ -1,9 +1,6 @@
-# `.cguard` format v1
+# .cguard file format (version 1)
 
-The `.cguard` file is UTF-8 JSON. Version 1 encrypts the plaintext with
-AES-256-GCM using a 32-byte key derived by PBKDF2-HMAC-SHA256 with 200,000
-iterations. Each new envelope uses a random 16-byte salt and 12-byte nonce.
-Argon2id is measured by the benchmark only; it does not alter the file format.
+A .cguard file is a UTF-8 JSON file. Version 1 encrypts the file with AES-256-GCM. It turns the password into a 32-byte key with PBKDF2-HMAC-SHA256 and 200,000 rounds. Each new file gets a random 16-byte salt and 12-byte nonce. Argon2id is only measured by the benchmark. It is not used for this file format.
 
 ## Fields
 
@@ -25,30 +22,14 @@ Argon2id is measured by the benchmark only; it does not alter the file format.
 }
 ```
 
-The GCM additional authenticated data (AAD) is the canonical UTF-8 JSON
-serialization of `format`, `version`, `algorithm`, `kdf`, `nonce_hex`,
-`filename`, `size`, and `sha256`, sorted by key with no spaces. This binds the
-visible metadata to the ciphertext. Decryption validates the exact v1 field
-set, supported KDF parameters, salt and nonce lengths, file size, and digest.
-An unknown version or malformed field is rejected before plaintext is
-returned. Authentication failure also rejects modified metadata and data.
+The extra authenticated data (AAD) uses the UTF-8 JSON values for format, version, algorithm, kdf, nonce_hex, filename, size, and sha256. The app sorts the field names and writes the JSON without spaces. This links the visible file details to the encrypted data. When opening a file, the app checks the exact version 1 fields and allowed settings. It also checks the salt and nonce lengths, file size, and SHA-256 digest. It rejects unknown versions, bad fields, or changed data and details before giving back the file.
 
-The password is never stored in the envelope. `filename` is informational and
-is reduced to a basename; the application does not write decrypted paths.
+The password is not saved in the file. The filename only keeps the file name, without its folder path. The app does not save opened files to a path from the file.
 
-## Legacy compatibility
+## Old file format
 
-CryptoGuard v1.0.0 files used base64 of `salt[16] || nonce[12] ||
-ciphertext_and_tag`. The decryption API continues to accept that legacy blob
-through the `ciphertext_b64` field. New encryption returns a structured
-`format: cguard`, `version: 1` envelope. Legacy envelopes did not authenticate
-their JSON metadata; only their encrypted bytes receive the AES-GCM tag check.
+CryptoGuard v1.0.0 files stored base64 text made from the 16-byte salt, 12-byte nonce, and encrypted data with its tag. The app can still open this old data from the ciphertext_b64 field. New files use the fields shown above. In old files, the JSON details were not part of the encryption check. Only the encrypted data was checked with the AES-GCM tag.
 
-## Fixed test vector
+## Test file
 
-[`vectors/cguard-v1.json`](vectors/cguard-v1.json) uses the public test-only
-password `cguard-vector-passphrase`, plaintext `CryptoGuard v1 test vector\n`,
-salt `000102030405060708090a0b0c0d0e0f`, and nonce
-`000102030405060708090a0b`. It is not a secure password or production
-ciphertext. The tests parse it, authenticate/decrypt it, and re-encrypt the
-same fields to verify the deterministic vector.
+The file [vectors/cguard-v1.json](vectors/cguard-v1.json) is for tests only. It uses the public test password cguard-vector-passphrase, the text CryptoGuard v1 test vector\n, salt 000102030405060708090a0b0c0d0e0f, and nonce 000102030405060708090a0b. Do not use the test password or encrypted data for real files. Tests open the file, check it, and make it again with the same fields.
