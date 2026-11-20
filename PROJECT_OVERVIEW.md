@@ -1,28 +1,35 @@
-# CryptoGuard — project overview
+# CryptoGuard project overview
 
-**Course:** Design Project I · Semester III · 2024–25 · **Author:** Malepati Sree Harsha · **Focus:** applied cryptography and credential security
+CryptoGuard is a local app for learning about password and file safety.
 
-## Goal
+## What it does
 
-Make password estimates, encryption, and integrity checks explainable in one small local web app. The interface emphasizes the threat-model assumptions behind each result.
+- Checks password strength and explains the score.
+- Makes passwords and passphrases.
+- Encrypts files and checks that they have not changed.
+- Makes file hashes and checks common hash formats.
+- Compares password storage speeds.
+- Runs a small John the Ripper demo with sample data.
 
-## Components
+## Main files
 
-- `cryptoguard/crypto_core.py` — password checks, rough guess-rate estimates, secure random generators, AES-GCM, and digests.
-- `cryptoguard/tools.py` — bounded subprocess wrappers for John the Ripper, `hashid`, and OpenSSL.
-- `cryptoguard/app.py` — Flask JSON API with input validation and an 8 MB decoded file limit.
-- `cryptoguard/static/index.html` — responsive interactive browser UI.
-- `cryptoguard/data/` — synthetic sample hashes and a short local wordlist.
+- `cryptoguard/crypto_core.py` checks passwords, makes passwords, encrypts files, and makes hashes.
+- `cryptoguard/tools.py` runs the sample tools.
+- `cryptoguard/app.py` starts the local web app.
+- `cryptoguard/static/index.html` has the web page.
+- `cryptoguard/data/` has sample hashes and words made for this project.
 
-## Data and scope
+## Data and limits
 
-All password hashes and wordlist entries are bundled demonstrations, not live account data. No external service is contacted. User files are handled in memory by the local app; the project does not persist them.
+The sample hashes and word list are made for this project. The app does not send them to an outside service. Files stay in memory while the app runs.
 
-## Run and verify
+This is a learning project, not a security product. The password score is an estimate. Speed tests depend on the computer.
+
+## Run it
 
 ```bash
 docker compose up --build -d
 make test
 ```
 
-Open `http://localhost:8101`. See the main README for limitations and design notes.
+Open http://localhost:8101. See the README for more details.
