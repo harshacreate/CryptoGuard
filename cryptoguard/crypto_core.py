@@ -98,7 +98,7 @@ def analyze_password(pw: str) -> Strength:
 
     issues, passed = [], []
     (passed if length >= 12 else issues).append(
-        "at least 12 characters" if length >= 12 else f"too short ({length} chars) — use 12+")
+        "at least 12 characters" if length >= 12 else f"too short ({length} chars). Use 12 or more.")
     for name, rx in [("lowercase", r"[a-z]"), ("uppercase", r"[A-Z]"),
                      ("a digit", r"\d"), ("a symbol", r"[^A-Za-z0-9]")]:
         (passed if re.search(rx, pw) else issues).append(

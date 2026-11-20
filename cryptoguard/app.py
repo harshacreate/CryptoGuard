@@ -1,4 +1,4 @@
-"""CryptoGuard — Password & File Security Toolkit (Flask backend)."""
+"""CryptoGuard password and file app built with Flask."""
 
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ def generate():
         return jsonify({"value": cc.generate_password(
             length, request.args.get("symbols", "1") != "0")})
     except ValueError:
-        return jsonify({"error": "password length must be 12–64; passphrases use 4–8 words"}), 400
+        return jsonify({"error": "password length must be from 12 to 64; passphrases use 4 to 8 words"}), 400
 
 
 @app.route("/api/encrypt", methods=["POST"])
@@ -106,7 +106,7 @@ def decrypt():
             # Legacy v1.0.0 files stored salt || nonce || ciphertext as base64.
             plain = cc.decrypt_bytes(d.get("ciphertext_b64", ""), d.get("password", ""))
     except Exception:
-        return jsonify({"error": "decryption failed — wrong password or corrupted/tampered data"}), 400
+        return jsonify({"error": "decryption failed: wrong password or damaged data"}), 400
     return jsonify({"text": plain.decode("utf-8", "replace"),
                     "data_b64": base64.b64encode(plain).decode(),
                     "sha256": cc.file_integrity(plain)["sha256"]})

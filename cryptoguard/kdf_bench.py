@@ -11,7 +11,7 @@ answers two questions for a given password:
 
 Numbers are for one core running Python's hashlib (OpenSSL underneath).
 Dedicated cracking rigs are far faster, especially on fast hashes, so treat
-the absolute times as a lower bound on attacker speed, and the *ratios*
+the absolute times as a lower bound on attacker speed, and the ratios
 between schemes as the useful result.
 
 Usage: ``python -m cryptoguard.kdf_bench`` (prints JSON).

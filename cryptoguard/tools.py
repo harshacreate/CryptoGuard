@@ -20,7 +20,7 @@ def tool_available(name: str) -> bool:
 
 
 # --------------------------------------------------------------------------
-# John the Ripper — crack bundled sample hashes to show real crack behaviour
+# John the Ripper: crack bundled sample hashes to show how cracking works
 # --------------------------------------------------------------------------
 
 def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
@@ -118,7 +118,7 @@ def identify_hash(value: str) -> Dict:
 
 
 # --------------------------------------------------------------------------
-# OpenSSL — show the crypto toolkit backing the app
+# OpenSSL: show the crypto toolkit used by the app
 # --------------------------------------------------------------------------
 
 def openssl_info() -> Dict:
