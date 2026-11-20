@@ -1,24 +1,24 @@
 # Change log
 
-This page lists the main CryptoGuard changes. It uses the [Keep a Changelog format](https://keepachangelog.com/en/1.1.0/). Version numbers use [SemVer](https://semver.org/).
+This page lists the main changes to CryptoGuard.
 
-## [1.1.0] - Unreleased (prepared; tag after review and merge)
+## [1.1.0] - Not released yet
+
+This version is ready for review. Add its release tag after review and merge.
 
 ### Added and changed
 
-- Added a key setup speed test in cryptoguard/kdf_bench.py, at POST /api/kdf-bench and in screen 01.06. It times MD5, SHA-1, SHA-256, PBKDF2 with 200k and 600k steps, and scrypt on the host. It also shows how the slower time compares to extra password characters.
-- Added web_security.py for web safety settings: CSP and OWASP headers, request IDs, access logs that leave out request bodies, JSON errors and per-client request limits.
-- Added security tests in tests/test_security.py and tests for the key setup speed test.
-- Fixed tool status words and made small-screen tap areas 44 pixels tall.
-- Added the report, slides, short report, diagrams, demo script and interview notes under report/. Added the project page under docs/.
-
-- Opt-in Argon2id KDF benchmark with explicit parameters and per-run timing metadata; file-encryption KDF remains unchanged.
-- Pattern-aware password findings for repeated strings, keyboard / alphabetic / numeric runs and common l33t substitutions.
-- Versioned `.cguard` v1 JSON envelope with authenticated metadata, a deterministic test vector, strict validation, and legacy v1.0.0 decryption support.
+- Added a test for how long different password key setup methods take. It is in cryptoguard/kdf_bench.py, at POST /api/kdf-bench, and on screen 01.06. It checks MD5, SHA-1, SHA-256, PBKDF2 with 200,000 and 600,000 steps, and scrypt on this computer. It also compares the slowest time with the time added by extra password characters.
+- Added web_security.py for browser security settings. It adds CSP and OWASP security headers, request IDs, access logs without request bodies, JSON error replies, and per-client request limits.
+- Added security tests in tests/test_security.py and tests for the new speed test.
+- Made status words clearer and made phone tap areas 44 pixels high.
+- Added the report, slides, short report, diagrams, demo steps, interview questions, and project page.
+- Added an optional Argon2id key setup speed test. It saves the settings and time for each run. File encryption still uses the same key setup as before.
+- Password checks now flag repeated text, runs of keyboard keys, letters or numbers, and common letter-to-number swaps.
+- Added version 1 of the .cguard JSON file format. It checks the file data and metadata, includes a fixed test example, checks input carefully, and can still open files made with version 1.0.0.
 
 ## [1.0.0] - 2026-11-10
 
 ### Added
 
-- First full release. It has a Flask API, a working dashboard, links to outside tools, a Docker image and Compose file, unit tests and GitHub Actions checks.
-
+- First full release. It includes a Flask API, a dashboard, links to outside tools, a Docker image and Compose file, tests, and GitHub Actions checks.
