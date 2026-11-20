@@ -6,7 +6,7 @@ The walkthrough uses disposable demo-only strings. Never enter a password you us
 
 CryptoGuard is a local app for checking passwords, making passwords and passphrases, encrypting files, and comparing password storage methods. It also has a small John the Ripper demo that uses sample data.
 
-Design Project I, Semester III (2024–25), B.Tech Cyber Security, Hindustan Institute of Technology and Science. Project by Malepati Sree Harsha.
+Design Project I, Semester III (2024 to 2025), B.Tech Cyber Security, Hindustan Institute of Technology and Science. Project by Malepati Sree Harsha.
 
 ![CryptoGuard workbench](docs/screenshots/01-hero.png)
 
