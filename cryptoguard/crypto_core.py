@@ -1,7 +1,5 @@
-"""Core cryptography and password-analysis logic (no external tools required).
-
-Everything here is self-contained Python so the app works offline; the external
-tools (John the Ripper, hashid, OpenSSL) add real, demonstrable depth on top.
+"""Password checks and file encryption code. This module does not need extra tools. It works
+offline. John the Ripper, hashid, and OpenSSL are optional tools that add more examples.
 """
 
 from __future__ import annotations
@@ -21,7 +19,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
-# A small bundled list of the most common weak passwords (for the reuse check).
+# A short list of common weak passwords used by the reuse check.
 COMMON = {
     "password", "123456", "123456789", "qwerty", "abc123", "111111", "12345678",
     "iloveyou", "admin", "welcome", "monkey", "dragon", "letmein", "login",
@@ -44,9 +42,7 @@ _COMMON_CHUNKS = {
 _KEYBOARD_ROWS = ("qwertyuiop", "asdfghjkl", "zxcvbnm")
 
 
-# --------------------------------------------------------------------------
 # Password strength
-# --------------------------------------------------------------------------
 
 @dataclass
 class Strength:
@@ -126,7 +122,8 @@ def analyze_password(pw: str) -> Strength:
     if chunk and folded not in COMMON:
         issues.append(f"contains a predictable word or l33t substitution ({chunk})")
 
-    # Effective guesses ~ half the keyspace; penalise detected weaknesses.
+    # Estimate that half the possible guesses may be tried. Lower the score for
+    # weak patterns.
     penalty = 1.0
     if folded in COMMON:
         penalty = 1e-12
@@ -149,9 +146,7 @@ def analyze_password(pw: str) -> Strength:
                     crack_times, issues, passed)
 
 
-# --------------------------------------------------------------------------
 # Generators
-# --------------------------------------------------------------------------
 
 def generate_password(length: int = 18, symbols: bool = True) -> str:
     alphabet = string.ascii_letters + string.digits + ("!@#$%^&*-_=+?" if symbols else "")
@@ -163,9 +158,7 @@ def generate_passphrase(words: int = 5) -> str:
     return "-".join(chosen) + str(secrets.randbelow(100))
 
 
-# --------------------------------------------------------------------------
 # File / data encryption (AES-256-GCM, PBKDF2 key derivation)
-# --------------------------------------------------------------------------
 
 def _derive_key(password: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=200_000)

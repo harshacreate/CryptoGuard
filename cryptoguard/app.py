@@ -1,4 +1,4 @@
-"""CryptoGuard password and file app built with Flask."""
+"""CryptoGuard runs as a local web app built with Flask."""
 
 from __future__ import annotations
 
@@ -103,7 +103,8 @@ def decrypt():
         if "envelope" in d:
             plain = cc.decrypt_envelope(d["envelope"], d.get("password", ""))
         else:
-            # Legacy v1.0.0 files stored salt || nonce || ciphertext as base64.
+            # Older files stored the salt, nonce, and encrypted data in this
+            # order, encoded as base64.
             plain = cc.decrypt_bytes(d.get("ciphertext_b64", ""), d.get("password", ""))
     except Exception:
         return jsonify({"error": "decryption failed: wrong password or damaged data"}), 400
@@ -148,10 +149,8 @@ def john():
 @app.route("/api/kdf-bench", methods=["POST"])
 @rate_limited(6)
 def kdf_benchmark():
-    """Time each password-storage scheme here, sized to the given password.
-
-    The password only sets the keyspace (charset size and length); it is not
-    hashed, stored or logged.
+    """Measure password storage methods on this computer. The password only sets the number of
+    possible guesses. The app does not hash it, save it, or write it to logs.
     """
     data = _body()
     if data is None:

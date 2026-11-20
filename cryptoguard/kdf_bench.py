@@ -1,20 +1,9 @@
-"""Measured (not assumed) password-hash cost on the machine running the app.
-
-Most strength meters convert entropy into a crack time using a guess rate they
-assume. This module instead times each storage scheme here and now, then
-answers two questions for a given password:
-
-1. How long would one CPU core take to try every candidate in its keyspace,
-   if the password were stored with scheme X?
-2. How many extra password characters is choosing scheme X over plain MD5
-   "worth"?  (log of the measured slowdown, in base charset_size.)
-
-Numbers are for one core running Python's hashlib (OpenSSL underneath).
-Dedicated cracking rigs are far faster, especially on fast hashes, so treat
-the absolute times as a lower bound on attacker speed, and the ratios
-between schemes as the useful result.
-
-Usage: ``python -m cryptoguard.kdf_bench`` (prints JSON).
+"""Measure how fast different password storage methods run on this computer. Many password
+meters use a guess speed they assume. This code measures each method on one CPU core. It
+estimates how long it could take to try every possible guess for a password. It also
+compares each method with MD5 in terms of extra random password characters. These are local
+measurements. Special cracking computers can be much faster. Use the ratios to compare
+methods on this computer. Run python -m cryptoguard.kdf_bench to print the results as JSON.
 """
 
 from __future__ import annotations
@@ -76,7 +65,7 @@ def _argon2id(memory_kib: int, time_cost: int, parallelism: int) -> Callable[[by
 
 
 def _rate(fn: Callable[[bytes], bytes], budget_s: float) -> Tuple[float, int, float]:
-    """Return (hashes per second, samples, elapsed seconds)."""
+    """Return the number of hashes per second, the number of samples, and the time used."""
     count = 0
     start = time.perf_counter()
     elapsed = 0.0
@@ -99,7 +88,7 @@ def _human(seconds: float) -> str:
 
 
 def _process_peak_rss_bytes():
-    """Return process high-water RSS in bytes where resource is available."""
+    """Return the highest memory use of this process in bytes, if the system reports it."""
     try:
         import resource
         value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss

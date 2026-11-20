@@ -1,8 +1,5 @@
-"""Wrappers around real security tools: John the Ripper, hashid, OpenSSL.
-
-Each wrapper degrades gracefully when the tool is not installed (so the app still
-runs in local development), and returns structured output the UI can render. In
-the Docker image the tools ARE installed, so these produce real results.
+"""Small wrappers for John the Ripper, hashid, and OpenSSL. If a tool is missing, the app still
+works and shows its status. The Docker image includes these tools.
 """
 
 from __future__ import annotations
@@ -19,21 +16,16 @@ def tool_available(name: str) -> bool:
     return shutil.which(name) is not None
 
 
-# --------------------------------------------------------------------------
 # John the Ripper: crack bundled sample hashes to show how cracking works
-# --------------------------------------------------------------------------
 
 def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
-    """Crack bundled md5crypt sample hashes with John (format auto-detected).
-
-    Core John stores results in the default pot (~/.john/john.pot); we clear it
-    first so the demo always shows a fresh crack.
+    """Run John the Ripper on the sample MD5-crypt hashes in this project. John saves results in a
+    pot file. Clear it first so each demo starts fresh.
     """
     if not tool_available("john"):
         return {"available": False, "note": "John the Ripper not installed in this environment."}
-    # Core John stores results in <home>/.john/john.pot and resolves <home> from
-    # the password database (not always $HOME). Resolve it the same way, set HOME
-    # to match, and clear the pot so every demo run is a fresh crack.
+    # John saves results in <home>/.john/john.pot. Find the same home folder
+    # John will use, then clear its saved results for this demo.
     try:
         import pwd as _pwd
         home = _pwd.getpwuid(os.getuid()).pw_dir
@@ -58,7 +50,7 @@ def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
     except (subprocess.TimeoutExpired, OSError) as exc:
         return {"available": True, "error": str(exc)}
 
-    # Primary: parse `john --show` lines of the form "?:password".
+    # First, read lines printed by john --show.
     cracked: List[Dict] = []
     for line in shown.stdout.splitlines():
         line = line.strip()
@@ -68,7 +60,7 @@ def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
             pw = line.split(":", 1)[1]
             if pw:
                 cracked.append({"password": pw})
-    # Backup: parse the live crack lines "password   (user)" from the run output.
+    # If needed, read the password lines from the run output.
     if not cracked:
         for line in (run.stdout + "\n" + run.stderr).splitlines():
             m = re.match(r"^(.*\S)\s+\([^)]+\)\s*$", line)
@@ -83,9 +75,7 @@ def run_john(hashes_path: str, wordlist_path: str, fmt: str = None) -> Dict:
     }
 
 
-# --------------------------------------------------------------------------
 # Hash identification (hashid CLI if present, else a built-in heuristic)
-# --------------------------------------------------------------------------
 
 _BUILTIN = [
     (re.compile(r"^[a-f0-9]{32}$", re.I), "MD5 / NTLM (32 hex)"),
@@ -117,9 +107,7 @@ def identify_hash(value: str) -> Dict:
     return out
 
 
-# --------------------------------------------------------------------------
 # OpenSSL: show the crypto toolkit used by the app
-# --------------------------------------------------------------------------
 
 def openssl_info() -> Dict:
     if not tool_available("openssl"):
