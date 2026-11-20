@@ -14,4 +14,4 @@ Before the demo, run `docker compose up --build -d`, open http://localhost:8101,
 | 4:45 | Show the speed test. | “On this computer, MD5 checks millions of guesses each second. PBKDF2 with 600,000 steps checks about 15. That is about 231,328 times slower, or like adding 2.7 random characters to a password.” |
 | 5:45 | Close. | “How passwords are saved matters as much as the rules for making them. Any questions?” |
 
-**If something fails:** If John is missing, the app is not running in Docker. Show the README picture instead. If the speed test shows error 429, the limit of 6 tests per minute is working. Wait one minute and try again.
+If something fails: If John is missing, the app is not running in Docker. Show the README picture instead. If the speed test shows error 429, the limit of 6 tests per minute is working. Wait one minute and try again.
