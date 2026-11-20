@@ -1,19 +1,19 @@
-# Changelog
+# Change log
 
-All notable changes to CryptoGuard are documented here. Format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
+This page lists the main CryptoGuard changes. It uses the [Keep a Changelog format](https://keepachangelog.com/en/1.1.0/). Version numbers use [SemVer](https://semver.org/).
 
 ## [1.1.0] - 2026-11-10
 
-### Added / changed
-- Measured KDF benchmark (`cryptoguard/kdf_bench.py`, `POST /api/kdf-bench`, UI section 01.06): times MD5, SHA-1, SHA-256, PBKDF2 (200k/600k) and scrypt on the host and converts the slowdown into equivalent password characters.
-- HTTP hardening layer (`web_security.py`): CSP and OWASP security headers, request IDs, structured access logs without bodies, JSON errors, per-client rate limits.
-- Security test suite (`tests/test_security.py`) and KDF benchmark tests.
-- Fixed tool-status label grammar; 44 px touch targets on small screens.
-- Academic report, presentation, synopsis, diagrams, demo script and viva notes under `report/`; showcase page under `docs/`.
+### Added and changed
+
+- Added a key setup speed test in cryptoguard/kdf_bench.py, at POST /api/kdf-bench and in screen 01.06. It times MD5, SHA-1, SHA-256, PBKDF2 with 200k and 600k steps, and scrypt on the host. It also shows how the slower time compares to extra password characters.
+- Added web_security.py for web safety settings: CSP and OWASP headers, request IDs, access logs that leave out request bodies, JSON errors and per-client request limits.
+- Added security tests in tests/test_security.py and tests for the key setup speed test.
+- Fixed tool status words and made small-screen tap areas 44 pixels tall.
+- Added the report, slides, short report, diagrams, demo script and interview notes under report/. Added the project page under docs/.
 
 ## [1.0.0] - 2026-11-10
 
 ### Added
-- First complete release: Flask API, interactive dashboard, external tool integrations,
-  Docker image and Compose file, unit tests and GitHub Actions CI.
+
+- First full release. It has a Flask API, a working dashboard, links to outside tools, a Docker image and Compose file, unit tests and GitHub Actions checks.
