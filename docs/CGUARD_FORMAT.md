@@ -1,8 +1,8 @@
-# .cguard file format (version 1)
+.cguard file format (version 1)
 
 A .cguard file is a UTF-8 JSON file. Version 1 encrypts the file with AES-256-GCM. It turns the password into a 32-byte key with PBKDF2-HMAC-SHA256 and 200,000 rounds. Each new file gets a random 16-byte salt and 12-byte nonce. Argon2id is only measured by the benchmark. It is not used for this file format.
 
-## Fields
+Fields
 
 ```json
 {
@@ -26,10 +26,10 @@ The extra authenticated data (AAD) uses the UTF-8 JSON values for format, versio
 
 The password is not saved in the file. The filename only keeps the file name, without its folder path. The app does not save opened files to a path from the file.
 
-## Old file format
+Old file format
 
 CryptoGuard v1.0.0 files stored base64 text made from the 16-byte salt, 12-byte nonce, and encrypted data with its tag. The app can still open this old data from the ciphertext_b64 field. New files use the fields shown above. In old files, the JSON details were not part of the encryption check. Only the encrypted data was checked with the AES-GCM tag.
 
-## Test file
+Test file
 
 The file [vectors/cguard-v1.json](vectors/cguard-v1.json) is for tests only. It uses the public test password cguard-vector-passphrase, the text CryptoGuard v1 test vector\n, salt 000102030405060708090a0b0c0d0e0f, and nonce 000102030405060708090a0b. Do not use the test password or encrypted data for real files. Tests open the file, check it, and make it again with the same fields.

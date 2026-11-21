@@ -1,4 +1,4 @@
-# CryptoGuard
+CryptoGuard
 
 ![CryptoGuard demo](demo/cryptoguard-demo.gif)
 
@@ -10,7 +10,7 @@ Design Project I, Semester III (2024 to 2025), B.Tech Cyber Security, Hindustan 
 
 ![CryptoGuard workbench](docs/screenshots/01-hero.png)
 
-## What it does
+What it does
 
 - Checks password length, repeated and sequential patterns, common words, and common l33t substitutions. It shows how findings change the estimate at different guessing speeds.
 - Makes passwords with 12 to 64 characters or passphrases with 4 to 8 words.
@@ -19,7 +19,7 @@ Design Project I, Semester III (2024 to 2025), B.Tech Cyber Security, Hindustan 
 - Runs John the Ripper only on the sample hashes and word list in this project.
 - Measures several password storage methods on the computer running the app. Argon2id is an opt-in benchmark and does not change the file-encryption format.
 
-## Results from one test
+Results from one test
 
 In a one-core Docker test, PBKDF2-SHA256 with 600,000 rounds took about 231,328 times longer than MD5. That is about 2.7 extra random characters in a 95-character set. The speed depends on the computer.
 
@@ -33,7 +33,7 @@ An opt-in Argon2id sample measured 379.7 hashes/s at 8 MiB, one pass, and one la
 
 The sample hashes are for learning. They are not real account passwords.
 
-## Run it
+Run it
 
 With Docker:
 
@@ -64,11 +64,11 @@ make run
 
 The app uses the local computer. See [SECURITY.md](SECURITY.md) for how it handles requests and files.
 
-## Limits
+Limits
 
 This is a learning project and has not had an outside security review. The password score uses a small local pattern list, not a trained estimator or a crack-time guarantee. Argon2id is benchmark-only; the `.cguard` v1 file format still uses PBKDF2, and host timings do not describe attacker-wide cracking rates.
 
-## More information
+More information
 
 - [`.cguard` v1 format](docs/CGUARD_FORMAT.md)
 - [Argon2id benchmark record](docs/ARGON2ID_BENCHMARK.md)

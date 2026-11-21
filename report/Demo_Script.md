@@ -1,4 +1,4 @@
-# CryptoGuard demo (5 to 7 minutes)
+CryptoGuard demo (5 to 7 minutes)
 
 Before the demo, run `docker compose up --build -d`, open http://localhost:8101, check that all three tool lights are green, and clear browser autofill.
 

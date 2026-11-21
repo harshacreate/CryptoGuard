@@ -1,4 +1,4 @@
-# CryptoGuard interview questions
+CryptoGuard interview questions
 
 1. Why use AES-GCM instead of AES-CBC?
 

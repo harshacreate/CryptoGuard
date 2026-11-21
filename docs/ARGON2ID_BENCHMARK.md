@@ -1,4 +1,4 @@
-# Argon2id benchmark
+Argon2id benchmark
 
 This page shows one local run of CryptoGuard's optional password key test on 2026-11-11. The test used 8 MiB and one pass to finish quickly. This setting is for a quick test only. It is not advice for storing passwords.
 
