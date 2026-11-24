@@ -12,12 +12,17 @@ Design Project I, Semester III (2024 to 2025), B.Tech Cyber Security, Hindustan 
 
 What it does
 
-- Checks password length, repeated and sequential patterns, common words, and common l33t substitutions. It shows how findings change the estimate at different guessing speeds.
-- Makes passwords with 12 to 64 characters or passphrases with 4 to 8 words.
-- Encrypts files with AES-256-GCM and PBKDF2 using a versioned, authenticated `.cguard` JSON envelope. It still decrypts legacy v1.0.0 files and rejects changed files or a wrong passphrase.
-- Makes file hashes and checks common hash formats.
-- Runs John the Ripper only on the sample hashes and word list in this project.
-- Measures several password storage methods on the computer running the app. Argon2id is an opt-in benchmark and does not change the file-encryption format.
+Checks password length, repeated and sequential patterns, common words, and common l33t substitutions. It shows how findings change the estimate at different guessing speeds.
+
+Makes passwords with 12 to 64 characters or passphrases with 4 to 8 words.
+
+Encrypts files with AES-256-GCM and PBKDF2 using a versioned, authenticated `.cguard` JSON envelope. It still decrypts legacy v1.0.0 files and rejects changed files or a wrong passphrase.
+
+Makes file hashes and checks common hash formats.
+
+Runs John the Ripper only on the sample hashes and word list in this project.
+
+Measures several password storage methods on the computer running the app. Argon2id is an opt-in benchmark and does not change the file-encryption format.
 
 Results from one test
 
@@ -25,11 +30,11 @@ In a one-core Docker test, PBKDF2-SHA256 with 600,000 rounds took about 231,328 
 
 An opt-in Argon2id sample measured 379.7 hashes/s at 8 MiB, one pass, and one lane on macOS arm64. It is a small reproducible benchmark setting, not a production recommendation; see the [measurement note](docs/ARGON2ID_BENCHMARK.md).
 
-| Check | Result |
-|---|---:|
-| Sample hashes found by John the Ripper | 8 of 9 |
-| Automated tests | 19 passed |
-| Password check speed under load | 1,535 requests per second |
+Sample hashes found by John the Ripper: 8 of 9
+
+Automated tests: 19 passed
+
+Password check speed under load: 1,535 requests per second
 
 The sample hashes are for learning. They are not real account passwords.
 
@@ -70,12 +75,16 @@ This is a learning project and has not had an outside security review. The passw
 
 More information
 
-- [`.cguard` v1 format](docs/CGUARD_FORMAT.md)
-- [Argon2id benchmark record](docs/ARGON2ID_BENCHMARK.md)
-- [Project overview](PROJECT_OVERVIEW.md)
-- [Screenshots and diagrams](docs/README.md)
-- [Security notes](SECURITY.md)
-- [Full project report](report/CryptoGuard_Project_Report.pdf)
+[`.cguard` v1 format](docs/CGUARD_FORMAT.md)
+
+[Argon2id benchmark record](docs/ARGON2ID_BENCHMARK.md)
+
+[Project overview](PROJECT_OVERVIEW.md)
+
+[Screenshots and diagrams](docs/README.md)
+
+[Security notes](SECURITY.md)
+
+[Full project report](report/CryptoGuard_Project_Report.pdf)
 
 The code is under the MIT license. The sample hashes and word list are made-up examples.
-

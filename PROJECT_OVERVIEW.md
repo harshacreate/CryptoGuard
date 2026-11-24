@@ -4,20 +4,29 @@ CryptoGuard is a local app for learning about password and file safety.
 
 What it does
 
-- Checks password strength and explains the score.
-- Makes passwords and passphrases.
-- Encrypts files and checks that they have not changed.
-- Makes file hashes and checks common hash formats.
-- Compares password storage speeds.
-- Runs a small John the Ripper demo with sample data.
+Checks password strength and explains the score.
+
+Makes passwords and passphrases.
+
+Encrypts files and checks that they have not changed.
+
+Makes file hashes and checks common hash formats.
+
+Compares password storage speeds.
+
+Runs a small John the Ripper demo with sample data.
 
 Main files
 
-- `cryptoguard/crypto_core.py` checks passwords, makes passwords, encrypts files, and makes hashes.
-- `cryptoguard/tools.py` runs the sample tools.
-- `cryptoguard/app.py` starts the local web app.
-- `cryptoguard/static/index.html` has the web page.
-- `cryptoguard/data/` has sample hashes and words made for this project.
+`cryptoguard/crypto_core.py` checks passwords, makes passwords, encrypts files, and makes hashes.
+
+`cryptoguard/tools.py` runs the sample tools.
+
+`cryptoguard/app.py` starts the local web app.
+
+`cryptoguard/static/index.html` has the web page.
+
+`cryptoguard/data/` has sample hashes and words made for this project.
 
 Data and limits
 

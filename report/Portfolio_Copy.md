@@ -12,8 +12,10 @@ In one test, PBKDF2-SHA256 with 600,000 rounds took about 231,328 times longer t
 
 Resume notes
 
-- Made a local app for checking passwords, making passwords, and encrypting files with AES-GCM.
-- Compared several password storage methods on the computer running the test.
-- Added tests for the app and its security settings.
+Made a local app for checking passwords, making passwords, and encrypting files with AES-GCM.
+
+Compared several password storage methods on the computer running the test.
+
+Added tests for the app and its security settings.
 
 The numbers in this file are from project tests. They are not a promise about other computers.
